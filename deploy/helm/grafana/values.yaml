@@ -1,0 +1,55 @@
+# helm/grafana/values.yaml
+replicaCount: 1
+
+image:
+  repository: grafana/grafana
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 3000
+  targetport: 3000
+
+ingress:
+  tlsHosts: flxhbba-dev.azure.uniper.energy
+  tlsSecret: flxhbba-dev-ssl-cert
+  appHost: flxhbba-dev.azure.uniper.energy
+  appPath: /dashboard
+
+adminUser: admin
+adminPassword: admin
+
+prometheus:
+  url: http://prometheus-service:9090
+  access: server
+
+loki:
+  url: http://loki-service:3100
+  access: proxy
+
+tempo:
+  url: http://tempo-service:3200
+  access: proxy
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+server:
+  persistentVolume:
+    enabled: true
+    accessModes:
+      - ReadWriteOnce
+    size: 30Gi
+    storageClass: default
+
+resources:
+  requests:
+    memory: 400Mi
+    cpu: "500m"
+  limits:
+    memory: 450Mi
+    cpu: "550m"

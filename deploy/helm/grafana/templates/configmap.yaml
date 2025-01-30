@@ -1,0 +1,52 @@
+# helm/grafana/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "grafana.fullname" . }}-config
+  labels:
+    app: {{ include "grafana.name" . }}
+    chart: {{ include "grafana.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  grafana.ini: |
+    [security]
+    admin_user = {{ .Values.adminUser }}
+    admin_password = {{ .Values.adminPassword }}
+
+    [server]
+    root_url = http://{{ .Values.ingress.appHost }}:{{ .Values.service.port }}{{ .Values.ingress.appPath }}
+    serve_from_sub_path = true
+
+    [ingress]
+    enabled = true
+    path = {{ .Values.ingress.appPath }}($|(/.*))
+    host = {{ .Values.ingress.appHost }}
+    pathType = ImplementationSpecific
+
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      access: {{ .Values.prometheus.access }}
+      url: {{ .Values.prometheus.url }}
+      isDefault: true
+    - name: Loki
+      type: loki
+      access: {{ .Values.loki.access }}
+      url: {{ .Values.loki.url }}
+      isDefault: false
+    - name: Tempo
+      type: tempo
+      access: {{ .Values.tempo.access }}
+      url: {{ .Values.tempo.url }}
+      isDefault: false
+      jsonData:
+        httpMethod: GET
+        tracesToLogs:
+          datasourceUid: 'Loki'
+        lokiSearch:
+          datasourceUid: 'Loki'
+        tracesToMetrics:
+          datasourceUid: 'Prometheus'

@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "worker.fullname" . }}
+  labels:
+    app: {{ template "worker.name" . }}
+    chart: {{ template "worker.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  strategy:
+    type: Recreate
+  replicas: {{ .Values.replicaCount }}  #remove if HPA is set as that controls replica
+  selector:
+    matchLabels:
+      app: {{ template "worker.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "worker.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["faststream", "run", "api.tasks.brokers:create_fs_app", "--host", "0.0.0.0", "--port", "9091", "--factory"]
+          env:
+            - name: "ENV"
+              value: "{{ .Values.container_env.ENV }}"
+
+            - name: "DATABASE__URL"
+              valueFrom:
+                secretKeyRef:
+                  key:  DATABASE__URL
+                  name: {{ .Release.Name }}-env
+
+            - name: "REDIS__HOST"
+              value: "{{ .Values.container_env.REDIS__HOST }}"
+
+            - name: "REDIS__PORT"
+              value: "{{ .Values.container_env.REDIS__PORT }}"
+
+            - name: "REDIS__SSL"
+              value: "{{ .Values.container_env.REDIS__SSL }}"
+
+            - name: "REDIS__PASSWORD"
+              valueFrom:
+                secretKeyRef:
+                  key: REDIS__PASSWORD
+                  name: {{ .Release.Name }}-env
+
+            - name: "LOG_LEVEL"
+              value: "{{ .Values.container_env.LOG_LEVEL }}"
+
+            - name: "APPLICATION_TZ"
+              value: "{{ .Values.container_env.APPLICATION_TZ }}"
+          ports:
+            - containerPort: {{ .Values.service.port }}
+              name: {{ .Values.service.name }}
+
+          resources:
+{{ toYaml .Values.resources | indent 12 }}

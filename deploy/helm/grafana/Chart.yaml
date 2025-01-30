@@ -1,0 +1,6 @@
+# helm/grafana/Chart.yaml
+apiVersion: v2
+name: grafana
+description: A Helm chart for Grafana
+version: 0.1.0
+appVersion: "11.2.2" # Specify the Grafana version you want to use

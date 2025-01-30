@@ -1,0 +1,24 @@
+# helm/grafana/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-service
+  annotations:
+    {{- range $key, $value := .Values.service.annotations }}
+      {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  labels:
+    app: {{ include "grafana.name" . }}
+    chart: {{ include "grafana.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetport }}
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ include "grafana.name" . }}
+    release: {{ .Release.Name }}

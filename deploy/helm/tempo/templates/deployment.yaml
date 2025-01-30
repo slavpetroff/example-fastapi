@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "tempo.fullname" . }}
+  labels:
+    app: {{ include "tempo.name" . }}
+    chart: {{ include "tempo.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  strategy:
+    type: Recreate
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "tempo.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "tempo.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      securityContext:
+        runAsUser: 1000  # Ensure this user has write permissions
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: tempo
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          args: ["-config.file=/etc/tempo/tempo.yaml"]
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.ports.http }}
+              protocol: TCP
+            - name: otel
+              containerPort: {{ .Values.service.ports.otlpGrpc }}
+              protocol: TCP
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/tempo
+            - name: tempo-storage
+              mountPath: /tmp
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ include "tempo.fullname" . }}-config
+        - name: tempo-storage
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-pvc

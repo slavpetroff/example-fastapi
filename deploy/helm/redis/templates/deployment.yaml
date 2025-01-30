@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "redis.fullname" . }}
+  labels:
+    app: {{ include "redis.name" . }}
+    chart: {{ include "redis.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  strategy:
+    type: Recreate
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "redis.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "redis.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: redis
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: redis
+              containerPort: {{ .Values.service.targetport }}
+              protocol: TCP
+          args: ["--requirepass", "$(REDIS_PASSWORD)"]
+          env:
+            - name: REDIS_PASSWORD
+              value: {{ .Values.redis.auth.password }}
+          volumeMounts:
+            - name: redis-storage
+              mountPath: /data
+            - name: config-volume
+              mountPath: /usr/local/etc/redis/redis.conf
+              subPath: redis.conf
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: redis-storage
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-pvc
+        - name: config-volume
+          configMap:
+            name: {{ include "redis.fullname" . }}-config

@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "loki.fullname" . }}
+  labels:
+    app: {{ include "loki.name" . }}
+    chart: {{ include "loki.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  strategy:
+    type: Recreate
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "loki.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "loki.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: loki
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetport }}
+              protocol: TCP
+          volumeMounts:
+            - name: loki-storage
+              mountPath: /var/loki/data
+            - name: config-volume
+              mountPath: /var/loki/config
+              subPath: loki-config.yaml
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: loki-storage
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-pvc
+        - name: config-volume
+          configMap:
+            name: {{ include "loki.fullname" . }}-config

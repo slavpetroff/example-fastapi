@@ -1,0 +1,33 @@
+replicaCount: 3
+
+image:
+  repository: repo-placeholder # put the name of the image here
+  tag: "2.0" # irrelevant - overridden in pipeline
+  pullPolicy: IfNotPresent
+
+container_env: # set container environment variables here. These could be overridden in the pipeline
+  ENV: dummy
+  REDIS__HOST: dummy
+  REDIS__PORT: dummy
+  REDIS__SSL: True
+  LOG_LEVEL: dummy
+  APPLICATION_TZ: dummy
+
+secret: # all will be overridden on the pipeline
+  DATABASE__URL: dummy
+  REDIS__PASSWORD: dummy
+
+service:
+  type: ClusterIP
+  port: 9091
+  targetport: 9091
+  protocol: TCP
+  name: metrics
+
+resources:
+  requests:
+    memory: 3000Mi
+    cpu: "3000m"
+  limits:
+    memory: 3050Mi
+    cpu: "3050m"

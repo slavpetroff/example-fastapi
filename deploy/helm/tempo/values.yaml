@@ -1,0 +1,46 @@
+replicaCount: 1
+
+image:
+  repository: grafana/tempo
+  tag: latest
+  pullPolicy: IfNotPresent
+
+persistence:
+  enabled: true
+  accessModes:
+    - ReadWriteOnce
+  size: 30Gi
+  storageClass: default
+
+service:
+  type: ClusterIP
+  ports:
+    http: 3200
+    otlpGrpc: 4317
+    otlpHttp: 4318
+
+config:
+  auth_enabled: false
+  distributor:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+  storage:
+    trace:
+      backend: local
+      wal:
+        path: /tmp/tempo/wal
+      local:
+        path: /tmp/tempo/blocks
+
+resources:
+  requests:
+    memory: 1000Mi
+    cpu: "500m"
+  limits:
+    memory: 1050Mi
+    cpu: "550m"

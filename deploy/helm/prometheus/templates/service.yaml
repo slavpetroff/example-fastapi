@@ -1,0 +1,20 @@
+# helm/prometheus/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-service
+  labels:
+    app: {{ include "prometheus.name" . }}
+    chart: {{ include "prometheus.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetport }}
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ include "prometheus.name" . }}
+    release: {{ .Release.Name }}

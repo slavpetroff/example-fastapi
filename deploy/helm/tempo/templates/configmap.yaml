@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tempo.fullname" . }}-config
+  labels:
+    app: {{ include "tempo.name" . }}
+    chart: {{ include "tempo.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  tempo.yaml: |
+    auth_enabled: {{ .Values.config.auth_enabled }}
+    stream_over_http_enabled: true
+    server:
+      # Listen for all incoming requests on port 3200.
+      http_listen_port: 3200
+
+    distributor:
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:4317
+            http:
+              endpoint: 0.0.0.0:4318
+
+    storage:
+      trace:
+        backend: {{ .Values.config.storage.trace.backend }}
+        wal:
+          path: {{ .Values.config.storage.trace.wal.path }}
+        local:
+          path: {{ .Values.config.storage.trace.local.path }}

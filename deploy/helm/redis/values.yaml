@@ -1,0 +1,38 @@
+replicaCount: 1
+
+image:
+  repository: redis
+  tag: 7-alpine
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 6379
+  targetport: 6379
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: 300m
+    memory: 512Mi
+
+persistence:
+  enabled: true
+  accessModes:
+    - ReadWriteOnce
+  size: 8Gi
+  storageClass: default
+
+redis:
+  auth:
+    enabled: true
+    password: test
+  config:
+    maxmemory: "512mb"
+    maxclients: 10000
+    databases: 16
+    loglevel: "notice"
+  ssl:
+    enabled: false

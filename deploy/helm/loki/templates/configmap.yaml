@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "loki.fullname" . }}-config
+  labels:
+    app: {{ include "loki.name" . }}
+    chart: {{ include "loki.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  loki-config.yaml: |
+    ingester:
+      lifecycler:
+        final_sleep: {{ .Values.ingesterConfig.lifecycler.final_sleep }}
+      chunk_idle_period: {{ .Values.ingesterConfig.chunk_idle_period }}
+      chunk_retain_period: {{ .Values.ingesterConfig.chunk_retain_period }}
+      max_transfer_retries: {{ .Values.ingesterConfig.max_transfer_retries }}
+      autoforget_unhealthy: {{ .Values.ingesterConfig.autoforget_unhealthy }}

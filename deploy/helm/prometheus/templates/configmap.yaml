@@ -1,0 +1,31 @@
+# helm/prometheus/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "prometheus.fullname" . }}-config
+  labels:
+    app: {{ include "prometheus.name" . }}
+    chart: {{ include "prometheus.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+    scrape_configs:
+      - job_name: "prometheus"
+        static_configs:
+          - targets: [ "localhost:9090" ]
+      - job_name: "tempo"
+        static_configs:
+          - targets: [ "tempo-service:3200" ]
+      - job_name: "worker"
+        static_configs:
+          - targets: [ "worker-service:9091" ]
+      - job_name: "worker-long"
+        static_configs:
+        - targets: [ "worker-service:9092" ]
+      - job_name: "app"
+        static_configs:
+          - targets: [ "app-service:5001" ]

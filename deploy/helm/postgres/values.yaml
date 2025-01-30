@@ -1,0 +1,39 @@
+replicaCount: 1
+
+image:
+  repository: postgres
+  tag: 15-alpine
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 5432
+  targetport: 5432
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+persistence:
+  enabled: true
+  accessModes:
+    - ReadWriteOnce
+  size: 8Gi
+  storageClass: default
+
+postgresql:
+  config:
+    max_connections: 100
+    shared_buffers: "256MB"
+    work_mem: "4MB"
+    effective_cache_size: "1GB"
+  auth:
+    username: test
+    password: test
+    database: postgres
+    schema: generation_cost
+  sslMode: disable

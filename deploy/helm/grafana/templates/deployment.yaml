@@ -1,0 +1,71 @@
+# helm/grafana/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "grafana.fullname" . }}
+  labels:
+    app: {{ include "grafana.name" . }}
+    chart: {{ include "grafana.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  strategy:
+    type: Recreate
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "grafana.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "grafana.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      securityContext:
+        fsGroup: 472
+      containers:
+        - name: grafana
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          securityContext:
+            runAsUser: 472
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+              - name: loadbalancer
+                containerPort: {{ .Values.service.targetport }}
+                protocol: TCP
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "grafana.fullname" . }}-admin
+                  key: admin-user
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "grafana.fullname" . }}-admin
+                  key: admin-password
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/grafana/grafana.ini
+              subPath: grafana.ini
+            - name: datasource-volume
+              mountPath: /etc/grafana/provisioning/datasources/datasources.yaml
+              subPath: datasources.yaml
+            - name: grafana-storage
+              mountPath: /var/lib/grafana
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ include "grafana.fullname" . }}-config
+        - name: datasource-volume
+          configMap:
+            name: {{ include "grafana.fullname" . }}-config
+        - name: dashboard-volume
+          configMap:
+            name: {{ include "grafana.fullname" . }}-config
+        - name: grafana-storage
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-pvc

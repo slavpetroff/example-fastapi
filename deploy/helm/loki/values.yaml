@@ -1,0 +1,34 @@
+replicaCount: 1
+
+image:
+  repository: grafana/loki
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 3100
+  targetport: 3100
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: 550m
+    memory: 550Mi
+
+persistence:
+  enabled: true
+  accessModes:
+    - ReadWriteOnce
+  size: 30Gi
+  storageClass: default
+
+ingesterConfig:
+  lifecycler:
+    final_sleep: 0s
+  chunk_idle_period: 5m
+  chunk_retain_period: 30s
+  max_transfer_retries: 0
+  autoforget_unhealthy: true

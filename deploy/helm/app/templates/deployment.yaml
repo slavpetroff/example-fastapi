@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "app.fullname" . }}
+  labels:
+    app: {{ template "app.name" . }}
+    chart: {{ template "app.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  strategy:
+    type: Recreate
+  replicas: {{ .Values.replicaCount }}  #remove if HPA is set as that controls replica
+  selector:
+    matchLabels:
+      app: {{ template "app.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "app.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["uvicorn", "api.main:create_app", "--host", "0.0.0.0", "--port", "5001", "--factory"]
+          env:
+            - name: "ENV"
+              value: "{{ .Values.container_env.ENV }}"
+
+            - name: "DATABASE__URL"
+              valueFrom:
+                secretKeyRef:
+                  key:  DATABASE__URL
+                  name: {{ .Release.Name }}-env
+
+            - name: "REDIS__HOST"
+              value: "{{ .Values.container_env.REDIS__HOST }}"
+
+            - name: "REDIS__PORT"
+              value: "{{ .Values.container_env.REDIS__PORT }}"
+
+            - name: "REDIS__SSL"
+              value: "{{ .Values.container_env.REDIS__SSL }}"
+
+            - name: "REDIS__PASSWORD"
+              valueFrom:
+                secretKeyRef:
+                  key: REDIS__PASSWORD
+                  name: {{ .Release.Name }}-env
+
+            - name: "LOG_LEVEL"
+              value: "{{ .Values.container_env.LOG_LEVEL }}"
+
+            - name: "APPLICATION_TZ"
+              value: "{{ .Values.container_env.APPLICATION_TZ }}"
+
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 5001
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 45
+
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 5001
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 45
+
+          ports:
+              - name: loadbalancer
+                containerPort: {{ .Values.service.targetport }}
+                protocol: TCP
+          resources:
+{{ toYaml .Values.resources | indent 12 }}

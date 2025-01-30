@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "postgres.fullname" . }}-config
+  labels:
+    app: {{ include "postgres.name" . }}
+    chart: {{ include "postgres.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  postgresql.conf: |
+    # Connection Settings
+    listen_addresses = '*'
+    max_connections = {{ .Values.postgresql.config.max_connections }}
+    port = {{ .Values.service.targetport }}
+
+    # Memory Settings
+    shared_buffers = {{ .Values.postgresql.config.shared_buffers }}
+    work_mem = {{ .Values.postgresql.config.worker_mem }}
+    maintenance_work_mem = 64MB
+
+    # Write Ahead Log (WAL)
+    wal_level = replica
+    max_wal_size = 1GB
+    min_wal_size = 80MB
+
+    # Query Tuning
+    random_page_cost = 1.1
+    effective_cache_size = {{ .Values.postgresql.config.effective_cache_size }}
+
+    # Checkpointing
+    checkpoint_timeout = 5min
+    checkpoint_completion_target = 0.9
+
+    # SSL Configuration
+    ssl = {{ .Values.postgresql.sslMode }}
+
+    # Connection Pooling
+    max_prepared_transactions = 0
+
+    # Logging
+    log_destination = 'stderr'
+    logging_collector = on
+    log_directory = 'log'
+    log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+    log_rotation_age = 1d
+    log_rotation_size = 10MB
+    log_min_duration_statement = 1000

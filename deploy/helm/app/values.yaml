@@ -1,0 +1,38 @@
+replicaCount: 1
+
+image:
+  repository: repo-placeholder # put the name of the image here
+  tag: "2.0" # irrelevant - overridden in pipeline
+  pullPolicy: IfNotPresent
+
+container_env: # set container environment variables here. These could be overridden in the pipeline
+  ENV: dummy
+  REDIS__HOST: dummy
+  REDIS__PORT: dummy
+  REDIS__SSL: True
+  LOG_LEVEL: dummy
+  APPLICATION_TZ: dummy
+
+secret: # all will be overridden on the pipeline
+  DATABASE__URL:: dummy
+  REDIS__PASSWORD: dummy
+
+service:
+  type: ClusterIP
+  port: 5001
+  targetport: 5001
+
+ingress:
+  tlsHosts: tls-host-placeholder.com
+  tlsSecret: tls-secret-placeholder
+  appHost: app-host-placeholder.com
+  appPath: /api/
+
+resources:
+  requests:
+    memory: "1000Mi"
+    cpu: "1000m"
+
+  limits:
+    memory: "1050Mi"
+    cpu: "1050m"

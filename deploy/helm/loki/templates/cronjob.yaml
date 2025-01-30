@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-restart-pods
+  labels:
+    app: {{ template "loki.name" . }}
+    chart: {{ template "loki.name" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 1
+  schedule: "*/50 * * * *"
+  successfulJobsHistoryLimit: 3
+  suspend: true
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          dnsPolicy: ClusterFirst
+          restartPolicy: Never
+          securityContext: {}
+          serviceAccount: default
+          serviceAccountName: default
+          terminationGracePeriodSeconds: 30
+          containers:
+          - name: kubectl
+            image: bitnami/kubectl:latest
+            resources:
+              requests:
+                cpu: "100m"
+                memory: "128Mi"
+              limits:
+                cpu: "200m"
+                memory: "256Mi"
+            command:
+            - kubectl
+            - delete
+            - pod
+            - -l
+            - app={{ template "loki.name" . }},release={{ .Release.Name }}
